@@ -4,17 +4,17 @@ import { Appointment } from './appointment.entity';
 @Entity()
 export class Client {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  email: string;
+  email!: string;
 
   @Column()
-  phone: string;
+  phone!: string;
 
   @OneToMany(() => Appointment, (appointment) => appointment.client)
-  appointments: Appointment[];
+  appointments!: Appointment[];
 }

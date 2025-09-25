@@ -4,17 +4,17 @@ import { Appointment } from './appointment.entity';
 @Entity()
 export class Service {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  description: string;
+  description!: string;
 
   @Column('decimal')
-  price: number;
+  price!: number;
 
   @OneToMany(() => Appointment, (appointment) => appointment.service)
-  appointments: Appointment[];
+  appointments!: Appointment[];
 }

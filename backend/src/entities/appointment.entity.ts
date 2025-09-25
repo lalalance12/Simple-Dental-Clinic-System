@@ -11,22 +11,22 @@ import { Service } from './service.entity';
 @Entity()
 export class Appointment {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  date: Date;
+  date!: Date;
 
   @Column()
-  time: string;
+  time!: string;
 
   @Column()
-  status: string; // 'scheduled', 'completed', 'cancelled'
+  status!: string; // 'scheduled', 'completed', 'cancelled'
 
   @ManyToOne(() => Client, (client) => client.appointments)
   @JoinColumn({ name: 'client_id' })
-  client: Client;
+  client!: Client;
 
   @ManyToOne(() => Service, (service) => service.appointments)
   @JoinColumn({ name: 'service_id' })
-  service: Service;
+  service!: Service;
 }
