@@ -56,7 +56,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         </div>
       )}
       <h3 className="h3 text-center mb-2">{title}</h3>
-      <p className="body-text text-center text-light">{description}</p>
+      <p className="body-text text-center text-dark">{description}</p>
       {onClick && (
         <div className="mt-4 text-center">
           <span className="text-secondary font-medium">Learn More →</span>

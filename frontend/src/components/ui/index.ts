@@ -4,6 +4,8 @@ export { Card, ServiceCard } from './Card';
 export { Input, Textarea, Select } from './Form';
 export { Navigation } from './Navigation';
 export { ProgressStepper } from './Progress';
+export { Header } from './Header';
+export { Footer } from './Footer';
 
 // Icons
 export {

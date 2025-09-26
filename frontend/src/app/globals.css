@@ -329,7 +329,7 @@ p, .body-text {
 }
 
 .form-input::placeholder {
-  color: var(--neutral-light-gray);
+  color: #6c757d; /* Much darker placeholder color */
 }
 
 .form-error {

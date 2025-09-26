@@ -43,7 +43,6 @@ export const Navigation: React.FC<NavigationProps> = ({
           className="navbar-toggle md:hidden"
           onClick={toggleMobileMenu}
           aria-label="Toggle navigation menu"
-          aria-expanded={isMobileMenuOpen.toString()}
         >
           <span className="sr-only">Menu</span>
           <svg
