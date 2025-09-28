@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { Appointment } from '../../entities/appointment.entity';
 import { CreateAppointmentDto } from '../../dto/create-appointment.dto';
+import { CreateBookingDto } from '../../dto/create-booking.dto';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -22,5 +23,12 @@ export class AppointmentsController {
     @Body() createAppointmentDto: CreateAppointmentDto,
   ): Promise<Appointment> {
     return this.appointmentsService.create(createAppointmentDto);
+  }
+
+  @Post('book')
+  createBooking(
+    @Body() createBookingDto: CreateBookingDto,
+  ): Promise<Appointment> {
+    return this.appointmentsService.createBooking(createBookingDto);
   }
 }

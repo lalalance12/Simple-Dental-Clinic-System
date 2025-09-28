@@ -1,7 +1,8 @@
 export class CreateAppointmentDto {
   clientId!: number;
-  serviceId!: number;
+  serviceIds!: number[];
   date!: Date;
   time!: string;
   status!: string;
+  notes?: string;
 }

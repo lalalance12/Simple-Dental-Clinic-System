@@ -7,13 +7,28 @@ export class Client {
   id!: number;
 
   @Column()
-  name!: string;
+  firstName!: string;
+
+  @Column()
+  lastName!: string;
 
   @Column()
   email!: string;
 
   @Column()
   phone!: string;
+
+  @Column({ type: 'date', nullable: true })
+  dateOfBirth!: Date;
+
+  @Column({ type: 'text', nullable: true })
+  address!: string;
+
+  @Column({ nullable: true })
+  emergencyContact!: string;
+
+  @Column({ type: 'text', nullable: true })
+  medicalHistory!: string;
 
   @OneToMany(() => Appointment, (appointment) => appointment.client)
   appointments!: Appointment[];

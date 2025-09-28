@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { Appointment } from './appointment.entity';
+import { AppointmentService } from './appointment-service.entity';
 
 @Entity()
 export class Service {
@@ -15,6 +15,12 @@ export class Service {
   @Column('decimal')
   price!: number;
 
-  @OneToMany(() => Appointment, (appointment) => appointment.service)
-  appointments!: Appointment[];
+  @Column({ nullable: true })
+  duration!: string;
+
+  @OneToMany(
+    () => AppointmentService,
+    (appointmentService) => appointmentService.service,
+  )
+  appointmentServices!: AppointmentService[];
 }

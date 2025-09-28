@@ -12,13 +12,13 @@ export class ServicesService {
   ) {}
 
   findAll(): Promise<Service[]> {
-    return this.servicesRepository.find({ relations: ['appointments'] });
+    return this.servicesRepository.find({ relations: ['appointmentServices'] });
   }
 
   async findOne(id: number): Promise<Service> {
     const service = await this.servicesRepository.findOne({
       where: { id },
-      relations: ['appointments'],
+      relations: ['appointmentServices'],
     });
 
     if (!service) {

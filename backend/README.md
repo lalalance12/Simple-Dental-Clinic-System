@@ -23,15 +23,48 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Backend API for the Simple Dental Clinic System built with NestJS, TypeORM, and PostgreSQL. This API provides endpoints for managing clients, services, and appointments for a dental clinic.
 
-## Project setup
+## Setup Instructions
+
+### 1. Environment Configuration
+
+Create a `.env` file in the backend root directory with the following variables:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=password
+DB_DATABASE=dental_clinic
+
+# Application Configuration
+PORT=3001
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:3000
+```
+
+### 2. Database Setup
+
+Make sure you have PostgreSQL installed and running. Create a database named `dental_clinic`.
+
+### 3. Install Dependencies
 
 ```bash
 $ npm install
 ```
 
-## Compile and run the project
+### 4. Seed the Database
+
+After setting up your database, run the seeder to populate it with dental services:
+
+```bash
+$ npm run seed
+```
+
+## Running the Application
 
 ```bash
 # development
@@ -43,6 +76,24 @@ $ npm run start:dev
 # production mode
 $ npm run start:prod
 ```
+
+## API Endpoints
+
+### Services
+- `GET /services` - Get all dental services
+- `GET /services/:id` - Get a specific service by ID
+- `POST /services` - Create a new service
+
+### Clients
+- `GET /clients` - Get all clients
+- `GET /clients/:id` - Get a specific client by ID
+- `POST /clients` - Create a new client
+
+### Appointments
+- `GET /appointments` - Get all appointments
+- `GET /appointments/:id` - Get a specific appointment by ID
+- `POST /appointments` - Create a new appointment
+- `POST /appointments/book` - Create a booking (client + appointment + services)
 
 ## Run tests
 

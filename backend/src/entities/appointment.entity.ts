@@ -4,9 +4,10 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Client } from './client.entity';
-import { Service } from './service.entity';
+import { AppointmentService } from './appointment-service.entity';
 
 @Entity()
 export class Appointment {
@@ -22,11 +23,16 @@ export class Appointment {
   @Column()
   status!: string; // 'scheduled', 'completed', 'cancelled'
 
+  @Column({ type: 'text', nullable: true })
+  notes!: string;
+
   @ManyToOne(() => Client, (client) => client.appointments)
   @JoinColumn({ name: 'client_id' })
   client!: Client;
 
-  @ManyToOne(() => Service, (service) => service.appointments)
-  @JoinColumn({ name: 'service_id' })
-  service!: Service;
+  @OneToMany(
+    () => AppointmentService,
+    (appointmentService) => appointmentService.appointment,
+  )
+  appointmentServices!: AppointmentService[];
 }
