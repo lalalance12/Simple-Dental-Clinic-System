@@ -91,6 +91,16 @@ export default function Home() {
                 Our Services
               </Button>
             </div>
+
+            {/* Admin Access */}
+            <div className="mt-8">
+              <button
+                onClick={() => (window.location.href = "/admin")}
+                className="text-white/70 hover:text-white text-sm underline underline-offset-4 transition-colors"
+              >
+                Admin Dashboard
+              </button>
+            </div>
           </div>
         </div>
       </section>
