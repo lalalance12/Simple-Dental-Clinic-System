@@ -64,9 +64,11 @@ export const api = {
     return response.json();
   },
 
-  // Create a booking (client + appointment)
-  async createBooking(bookingData: {
-    client: {
+  // Create an appointment (unified - handles both new and existing clients)
+  async createAppointment(appointmentData: {
+    // Either clientId (for existing client) OR client data (for new client)
+    clientId?: number;
+    client?: {
       firstName: string;
       lastName: string;
       email: string;
@@ -79,19 +81,20 @@ export const api = {
     serviceIds: number[];
     date: string;
     time: string;
+    status?: string;
     notes?: string;
   }): Promise<Appointment> {
-    const response = await fetch(`${API_BASE_URL}/appointments/book`, {
+    const response = await fetch(`${API_BASE_URL}/appointments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify(appointmentData),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to create booking');
+      throw new Error(errorData.message || 'Failed to create appointment');
     }
 
     return response.json();

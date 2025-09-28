@@ -5,7 +5,6 @@ import { Appointment } from '../../entities/appointment.entity';
 import { AppointmentService } from '../../entities/appointment-service.entity';
 import { Client } from '../../entities/client.entity';
 import { CreateAppointmentDto } from '../../dto/create-appointment.dto';
-import { CreateBookingDto } from '../../dto/create-booking.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -48,12 +47,58 @@ export class AppointmentsService {
   async create(
     createAppointmentDto: CreateAppointmentDto,
   ): Promise<Appointment> {
+    // Validate that either clientId or client data is provided, but not both
+    if (!createAppointmentDto.clientId && !createAppointmentDto.client) {
+      throw new Error('Either clientId or client data must be provided');
+    }
+    if (createAppointmentDto.clientId && createAppointmentDto.client) {
+      throw new Error('Cannot provide both clientId and client data');
+    }
+
+    let clientId: number;
+
+    // Handle existing client (admin booking)
+    if (createAppointmentDto.clientId) {
+      clientId = createAppointmentDto.clientId;
+    }
+    // Handle new client (patient booking)
+    else if (createAppointmentDto.client) {
+      // Check if client already exists
+      let client = await this.clientsRepository.findOne({
+        where: {
+          email: createAppointmentDto.client.email,
+          firstName: createAppointmentDto.client.firstName,
+          lastName: createAppointmentDto.client.lastName,
+        },
+      });
+
+      if (!client) {
+        client = this.clientsRepository.create({
+          firstName: createAppointmentDto.client.firstName,
+          lastName: createAppointmentDto.client.lastName,
+          email: createAppointmentDto.client.email,
+          phone: createAppointmentDto.client.phone,
+          dateOfBirth: createAppointmentDto.client.dateOfBirth
+            ? new Date(createAppointmentDto.client.dateOfBirth)
+            : undefined,
+          address: createAppointmentDto.client.address,
+          emergencyContact: createAppointmentDto.client.emergencyContact,
+          medicalHistory: createAppointmentDto.client.medicalHistory,
+        });
+        client = await this.clientsRepository.save(client);
+      }
+
+      clientId = client.id;
+    } else {
+      throw new Error('Invalid client data provided');
+    }
+
     // Create the appointment
     const appointment = this.appointmentsRepository.create({
-      client: { id: createAppointmentDto.clientId },
-      date: createAppointmentDto.date,
+      client: { id: clientId },
+      date: new Date(createAppointmentDto.date),
       time: createAppointmentDto.time,
-      status: createAppointmentDto.status,
+      status: createAppointmentDto.status || 'scheduled',
       notes: createAppointmentDto.notes,
     });
 
@@ -62,60 +107,6 @@ export class AppointmentsService {
 
     // Create appointment-service relationships
     const appointmentServices = createAppointmentDto.serviceIds.map(
-      (serviceId) => ({
-        appointment: { id: savedAppointment.id },
-        service: { id: serviceId },
-      }),
-    );
-
-    await this.appointmentServiceRepository.save(appointmentServices);
-
-    // Return the appointment with all relations loaded
-    return this.findOne(savedAppointment.id);
-  }
-
-  async createBooking(
-    createBookingDto: CreateBookingDto,
-  ): Promise<Appointment> {
-    // Create or find existing client
-    let client = await this.clientsRepository.findOne({
-      where: {
-        email: createBookingDto.client.email,
-        firstName: createBookingDto.client.firstName,
-        lastName: createBookingDto.client.lastName,
-      },
-    });
-
-    if (!client) {
-      client = this.clientsRepository.create({
-        firstName: createBookingDto.client.firstName,
-        lastName: createBookingDto.client.lastName,
-        email: createBookingDto.client.email,
-        phone: createBookingDto.client.phone,
-        dateOfBirth: createBookingDto.client.dateOfBirth
-          ? new Date(createBookingDto.client.dateOfBirth)
-          : undefined,
-        address: createBookingDto.client.address,
-        emergencyContact: createBookingDto.client.emergencyContact,
-        medicalHistory: createBookingDto.client.medicalHistory,
-      });
-      client = await this.clientsRepository.save(client);
-    }
-
-    // Create the appointment
-    const appointment = this.appointmentsRepository.create({
-      client: { id: client.id },
-      date: new Date(createBookingDto.date),
-      time: createBookingDto.time,
-      status: 'scheduled',
-      notes: createBookingDto.notes,
-    });
-
-    const savedAppointment =
-      await this.appointmentsRepository.save(appointment);
-
-    // Create appointment-service relationships
-    const appointmentServices = createBookingDto.serviceIds.map(
       (serviceId) => ({
         appointment: { id: savedAppointment.id },
         service: { id: serviceId },

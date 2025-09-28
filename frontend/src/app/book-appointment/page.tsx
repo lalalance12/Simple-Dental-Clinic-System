@@ -208,7 +208,7 @@ export default function BookAppointmentPage() {
       try {
         setSubmitting(true);
 
-        const bookingPayload = {
+        const appointmentPayload = {
           client: {
             firstName: bookingData.firstName,
             lastName: bookingData.lastName,
@@ -222,10 +222,11 @@ export default function BookAppointmentPage() {
           serviceIds: bookingData.selectedServices.map((id) => parseInt(id)),
           date: bookingData.preferredDate,
           time: bookingData.preferredTime,
+          status: "scheduled",
           notes: bookingData.notes || undefined,
         };
 
-        const result = await api.createBooking(bookingPayload);
+        await api.createAppointment(appointmentPayload);
 
         alert(
           "Appointment booked successfully! You will receive a confirmation email shortly."

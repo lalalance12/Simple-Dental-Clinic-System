@@ -168,7 +168,7 @@ export default function AdminAddAppointmentPage() {
       try {
         setSubmitting(true);
 
-        const bookingPayload = {
+        const appointmentPayload = {
           client: {
             firstName: bookingData.firstName,
             lastName: bookingData.lastName,
@@ -182,10 +182,11 @@ export default function AdminAddAppointmentPage() {
           serviceIds: bookingData.selectedServices.map((id) => parseInt(id)),
           date: bookingData.preferredDate,
           time: bookingData.preferredTime,
+          status: "scheduled",
           notes: bookingData.notes || undefined,
         };
 
-        await api.createBooking(bookingPayload);
+        await api.createAppointment(appointmentPayload);
 
         alert("Appointment booked successfully!");
         router.push("/admin");
