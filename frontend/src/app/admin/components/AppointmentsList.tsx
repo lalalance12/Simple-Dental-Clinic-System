@@ -2,11 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { api, Appointment } from "../../../lib/api";
+import AppointmentDetailsModal from "./AppointmentDetailsModal";
 
 export default function AppointmentsList() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -47,6 +53,26 @@ export default function AppointmentsList() {
     });
   };
 
+  const handleAppointmentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedAppointment(null);
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(appointments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentAppointments = appointments.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -73,13 +99,13 @@ export default function AppointmentsList() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <div className="text-xs text-gray-600">
+        <div className="text-sm text-gray-600">
           Total: {appointments.length} appointments
         </div>
       </div>
 
       {appointments.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="text-center py-12">
           <div className="text-4xl mb-3">📅</div>
           <h3 className="text-lg font-semibold text-dark mb-2">
             No appointments yet
@@ -89,85 +115,197 @@ export default function AppointmentsList() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {appointments.map((appointment) => (
-            <div
-              key={appointment.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-semibold text-dark text-base">
-                    {appointment.client.firstName} {appointment.client.lastName}
-                  </h3>
-                  <p className="text-dark/70 text-xs">
-                    {appointment.client.email}
-                  </p>
-                  <p className="text-dark/70 text-xs">
-                    {appointment.client.phone}
-                  </p>
-                </div>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    appointment.status
-                  )}`}
-                >
-                  {appointment.status.charAt(0).toUpperCase() +
-                    appointment.status.slice(1)}
-                </span>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-3 mb-3">
-                <div>
-                  <p className="text-xs text-dark/70">Date</p>
-                  <p className="font-medium text-sm">
-                    {formatDate(
-                      appointment.date instanceof Date
-                        ? appointment.date.toISOString()
-                        : appointment.date
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-dark/70">Time</p>
-                  <p className="font-medium text-sm">{appointment.time}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-dark/70">Services</p>
-                  <p className="font-medium text-sm">
-                    {appointment.appointmentServices?.length || 0} service(s)
-                  </p>
-                </div>
-              </div>
-
-              {appointment.notes && (
-                <div className="mb-3">
-                  <p className="text-xs text-dark/70">Notes</p>
-                  <p className="text-xs bg-gray-50 p-2 rounded-md">
-                    {appointment.notes}
-                  </p>
-                </div>
-              )}
-
-              {appointment.appointmentServices &&
-                appointment.appointmentServices.length > 0 && (
-                  <div>
-                    <p className="text-xs text-dark/70 mb-1.5">Services:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {appointment.appointmentServices.map((as) => (
-                        <span
-                          key={as.id}
-                          className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs"
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Client
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date & Time
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Services
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {currentAppointments.map((appointment) => (
+                  <tr
+                    key={appointment.id}
+                    onClick={() => handleAppointmentClick(appointment)}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span className="text-sm font-medium text-white">
+                              {appointment.client.firstName.charAt(0)}
+                              {appointment.client.lastName.charAt(0)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {appointment.client.firstName}{" "}
+                            {appointment.client.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {appointment.client.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDate(
+                          appointment.date instanceof Date
+                            ? appointment.date.toISOString()
+                            : appointment.date
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {appointment.time}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {appointment.appointmentServices
+                          ?.slice(0, 2)
+                          .map((as) => (
+                            <span
+                              key={as.id}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                            >
+                              {as.service.name}
+                            </span>
+                          ))}
+                        {appointment.appointmentServices &&
+                          appointment.appointmentServices.length > 2 && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              +{appointment.appointmentServices.length - 2} more
+                            </span>
+                          )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                          appointment.status
+                        )}`}
+                      >
+                        {appointment.status.charAt(0).toUpperCase() +
+                          appointment.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          className="p-1.5 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors duration-200 group"
+                          title="Edit appointment"
                         >
-                          {as.service.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                          <svg
+                            className="w-4 h-4 group-hover:scale-110 transition-transform duration-200"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-md transition-colors duration-200 group"
+                          title="Delete appointment"
+                        >
+                          <svg
+                            className="w-4 h-4 group-hover:scale-110 transition-transform duration-200"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200">
+              <div className="text-sm text-gray-700">
+                Showing {startIndex + 1} to{" "}
+                {Math.min(endIndex, appointments.length)} of{" "}
+                {appointments.length} appointments
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-1 text-sm border rounded-md ${
+                        currentPage === page
+                          ? "bg-primary text-white border-primary"
+                          : "border-gray-300 bg-white hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
                 )}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          ))}
+          )}
         </div>
+      )}
+
+      {/* Appointment Details Modal */}
+      {selectedAppointment && (
+        <AppointmentDetailsModal
+          appointment={selectedAppointment}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
       )}
     </div>
   );

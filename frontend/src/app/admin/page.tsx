@@ -35,11 +35,6 @@ export default function AdminDashboard() {
   }, []);
 
   // Navigation handlers
-  const handleExportData = () => {
-    console.log("Export data clicked");
-    // TODO: Implement export functionality
-  };
-
   const handleAddNew = () => {
     if (currentView === "appointments") {
       router.push("/admin/add-appointment");
@@ -84,11 +79,7 @@ export default function AdminDashboard() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <AdminHeader
-          title={getPageTitle()}
-          onExportData={handleExportData}
-          onAddNew={handleAddNew}
-        />
+        <AdminHeader title={getPageTitle()} onAddNew={handleAddNew} />
 
         {/* Content Area - Scrollable */}
         <main className="flex-1 overflow-auto">
