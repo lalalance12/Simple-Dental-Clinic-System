@@ -118,4 +118,14 @@ export class AppointmentsService {
     // Return the appointment with all relations loaded
     return this.findOne(savedAppointment.id);
   }
+
+  async remove(id: number): Promise<void> {
+    await this.findOne(id); // This will throw NotFoundException if not found
+
+    // Delete appointment-service relationships first
+    await this.appointmentServiceRepository.delete({ appointment: { id } });
+
+    // Then delete the appointment
+    await this.appointmentsRepository.delete(id);
+  }
 }

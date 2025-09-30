@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { api, Appointment } from "../../../lib/api";
 import AppointmentDetailsModal from "./AppointmentDetailsModal";
+import DeleteAppointmentModal from "./DeleteAppointmentModal";
 
 export default function AppointmentsList() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -11,6 +12,10 @@ export default function AppointmentsList() {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] =
+    useState<Appointment | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -61,6 +66,42 @@ export default function AppointmentsList() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedAppointment(null);
+  };
+
+  const handleDeleteAppointment = (appointment: Appointment) => {
+    setAppointmentToDelete(appointment);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!appointmentToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await api.deleteAppointment(appointmentToDelete.id);
+      setAppointments((prevAppointments) =>
+        prevAppointments.filter(
+          (appointment) => appointment.id !== appointmentToDelete.id
+        )
+      );
+      // Close modal if the deleted appointment was currently selected
+      if (selectedAppointment?.id === appointmentToDelete.id) {
+        setIsModalOpen(false);
+        setSelectedAppointment(null);
+      }
+      setIsDeleteModalOpen(false);
+      setAppointmentToDelete(null);
+    } catch (err) {
+      console.error("Error deleting appointment:", err);
+      alert("Failed to delete appointment. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setAppointmentToDelete(null);
   };
 
   // Pagination logic
@@ -228,6 +269,10 @@ export default function AppointmentsList() {
                           </svg>
                         </button>
                         <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteAppointment(appointment);
+                          }}
                           className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-md transition-colors duration-200 group"
                           title="Delete appointment"
                         >
@@ -305,6 +350,17 @@ export default function AppointmentsList() {
           appointment={selectedAppointment}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
+        />
+      )}
+
+      {/* Delete Appointment Modal */}
+      {appointmentToDelete && (
+        <DeleteAppointmentModal
+          appointment={appointmentToDelete}
+          isOpen={isDeleteModalOpen}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
         />
       )}
     </div>

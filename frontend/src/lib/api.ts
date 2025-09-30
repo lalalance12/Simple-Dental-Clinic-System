@@ -99,5 +99,17 @@ export const api = {
 
     return response.json();
   },
+
+  // Delete an appointment
+  async deleteAppointment(appointmentId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to delete appointment');
+    }
+  },
 };
 

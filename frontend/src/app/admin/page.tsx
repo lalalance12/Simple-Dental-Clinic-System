@@ -36,12 +36,8 @@ export default function AdminDashboard() {
 
   // Navigation handlers
   const handleAddNew = () => {
-    if (currentView === "appointments") {
-      router.push("/admin/add-appointment");
-    } else if (currentView === "clients") {
-      // TODO: Create add client page
-      console.log("Add client clicked");
-    }
+    router.push("/admin/add-appointment");
+    console.log("Add appointment clicked");
   };
 
   const renderContent = () => {
