@@ -76,6 +76,7 @@ export default function AdminAddAppointmentPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmationAccepted, setConfirmationAccepted] = useState(false);
 
   // Fetch services on component mount
   useEffect(() => {
@@ -135,6 +136,15 @@ export default function AdminAddAppointmentPage() {
       case 3: // Schedule
         if (!bookingData.preferredDate)
           newErrors.preferredDate = "Please select a date";
+        else {
+          const selectedDate = new Date(bookingData.preferredDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Set to start of today
+
+          if (selectedDate < today) {
+            newErrors.preferredDate = "Please select today or a future date";
+          }
+        }
         if (!bookingData.preferredTime)
           newErrors.preferredTime = "Please select a time";
         break;
@@ -164,6 +174,10 @@ export default function AdminAddAppointmentPage() {
   };
 
   const handleSubmit = async () => {
+    if (!confirmationAccepted) {
+      return;
+    }
+
     if (validateStep(currentStep)) {
       try {
         setSubmitting(true);
@@ -471,112 +485,219 @@ export default function AdminAddAppointmentPage() {
 
       case 4:
         return (
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-dark mb-3">
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-dark mb-4">
                 Confirm Appointment
               </h2>
-              <p className="text-dark/80 text-sm">
-                Please review all details before confirming the appointment.
+              <p className="text-dark/70 text-base max-w-md mx-auto">
+                Please review all appointment details carefully before
+                confirming.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-6">
               {/* Patient Information */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-dark mb-3 flex items-center gap-2 text-sm">
-                  <span className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+              <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     1
-                  </span>
-                  Patient Information
-                </h3>
-                <div className="space-y-1 text-xs">
-                  <p>
-                    <strong>Name:</strong> {bookingData.firstName}{" "}
-                    {bookingData.lastName}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {bookingData.email}
-                  </p>
-                  <p>
-                    <strong>Phone:</strong> {bookingData.phone}
-                  </p>
+                  </div>
+                  <h3 className="font-semibold text-dark text-base">
+                    Patient Information
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Name
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.firstName} {bookingData.lastName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Email
+                    </span>
+                    <span className="font-medium text-dark text-sm break-words">
+                      {bookingData.email}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Phone
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.phone}
+                    </span>
+                  </div>
                   {bookingData.dateOfBirth && (
-                    <p>
-                      <strong>Date of Birth:</strong> {bookingData.dateOfBirth}
-                    </p>
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">
+                        Date of Birth
+                      </span>
+                      <span className="font-medium text-dark text-sm">
+                        {bookingData.dateOfBirth}
+                      </span>
+                    </div>
                   )}
                   {bookingData.emergencyContact && (
-                    <p>
-                      <strong>Emergency Contact:</strong>{" "}
-                      {bookingData.emergencyContact}
-                    </p>
+                    <div className="col-span-2">
+                      <span className="text-gray-600 text-sm block mb-1">
+                        Emergency Contact
+                      </span>
+                      <span className="font-medium text-dark text-sm break-words">
+                        {bookingData.emergencyContact}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Services & Schedule */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-dark mb-3 flex items-center gap-2 text-sm">
-                  <span className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center text-white text-xs">
+              <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     2
-                  </span>
-                  Services & Schedule
-                </h3>
-                <div className="space-y-1 text-xs">
-                  <div>
-                    <strong>Services:</strong>
-                    <ul className="mt-1 ml-4">
+                  </div>
+                  <h3 className="font-semibold text-dark text-base">
+                    Services & Schedule
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <span className="text-gray-600 text-sm block mb-2">
+                      Services
+                    </span>
+                    <div className="space-y-1">
                       {bookingData.selectedServices.map((serviceId) => {
                         const service = services.find(
                           (s) => s.id === parseInt(serviceId)
                         );
-                        return <li key={serviceId}>{service?.name}</li>;
+                        return (
+                          <div
+                            key={serviceId}
+                            className="text-sm font-medium text-dark bg-blue-50 px-3 py-1 rounded-md inline-block mr-2 mb-1"
+                          >
+                            {service?.name}
+                          </div>
+                        );
                       })}
-                    </ul>
+                    </div>
                   </div>
-                  <p>
-                    <strong>Date:</strong> {bookingData.preferredDate}
-                  </p>
-                  <p>
-                    <strong>Time:</strong> {bookingData.preferredTime}
-                  </p>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Date
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.preferredDate}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Time
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.preferredTime}
+                    </span>
+                  </div>
                   {bookingData.notes && (
-                    <p>
-                      <strong>Notes:</strong> {bookingData.notes}
-                    </p>
+                    <div className="col-span-2">
+                      <span className="text-gray-600 text-sm block mb-1">
+                        Notes
+                      </span>
+                      <p className="text-sm text-dark bg-gray-50 p-2 rounded-md">
+                        {bookingData.notes}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Payment Information */}
-              <div className="bg-gray-50 p-4 rounded-lg md:col-span-2">
-                <h3 className="font-semibold text-dark mb-3 flex items-center gap-2 text-sm">
-                  <span className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
+              {/* Appointment Summary */}
+              <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     3
-                  </span>
-                  Appointment Summary
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1 text-xs">
-                    {bookingData.selectedServices.map((serviceId) => {
-                      const service = services.find(
-                        (s) => s.id === parseInt(serviceId)
-                      );
-                      return (
-                        <div key={serviceId} className="flex justify-between">
-                          <span>{service?.name}</span>
-                          <span>₱{service?.price?.toLocaleString()}</span>
-                        </div>
-                      );
-                    })}
-                    <div className="border-t border-gray-300 pt-2 mt-4 flex justify-between font-bold">
-                      <span>Total Amount:</span>
-                      <span className="text-lg">
+                  </div>
+                  <h3 className="font-semibold text-dark text-base">
+                    Appointment Summary
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-2">
+                      Service Breakdown
+                    </span>
+                    <div className="space-y-2">
+                      {bookingData.selectedServices.map((serviceId) => {
+                        const service = services.find(
+                          (s) => s.id === parseInt(serviceId)
+                        );
+                        return (
+                          <div
+                            key={serviceId}
+                            className="flex justify-between text-sm"
+                          >
+                            <span className="text-dark">{service?.name}</span>
+                            <span className="font-medium text-dark">
+                              ₱{service?.price?.toLocaleString()}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-200 pt-3 mt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 text-sm">
+                        Total Amount
+                      </span>
+                      <span className="text-xl font-bold text-blue-600">
                         ₱{calculateTotal().toLocaleString()}
                       </span>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Confirmation Notice */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-8">
+              <div className="flex items-start gap-4">
+                <button
+                  onClick={() => setConfirmationAccepted(!confirmationAccepted)}
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                    confirmationAccepted
+                      ? "bg-blue-600 border-blue-600"
+                      : "bg-white border-blue-300 hover:border-blue-400"
+                  }`}
+                  aria-label="Confirm appointment details"
+                >
+                  {confirmationAccepted && (
+                    <svg
+                      className="w-2 h-2 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                </button>
+                <div className="flex-1">
+                  <p className="text-sm text-blue-800 font-medium mb-1">
+                    Confirm Appointment Details
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    By confirming this appointment, you acknowledge that all
+                    information provided is accurate and the patient has been
+                    informed of their appointment details.
+                  </p>
                 </div>
               </div>
             </div>
@@ -601,7 +722,7 @@ export default function AdminAddAppointmentPage() {
               ← Back to Admin
             </button>
           </div>
-          <div>
+          <div className="justify-center text-center">
             <h1 className="text-lg font-bold text-gray-900">
               Add New Appointment
             </h1>
@@ -645,7 +766,9 @@ export default function AdminAddAppointmentPage() {
               <Button
                 variant="primary"
                 onClick={currentStep === 4 ? handleSubmit : nextStep}
-                disabled={submitting}
+                disabled={
+                  submitting || (currentStep === 4 && !confirmationAccepted)
+                }
                 className="px-6 py-2 text-sm"
               >
                 {submitting ? (

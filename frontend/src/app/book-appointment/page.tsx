@@ -35,8 +35,7 @@ const progressSteps = [
   { id: 1, label: "Patient Info", completed: false, active: true },
   { id: 2, label: "Services", completed: false, active: false },
   { id: 3, label: "Schedule", completed: false, active: false },
-  { id: 4, label: "Payment", completed: false, active: false },
-  { id: 5, label: "Confirm", completed: false, active: false },
+  { id: 4, label: "Confirm", completed: false, active: false },
 ];
 
 interface BookingData {
@@ -57,13 +56,6 @@ interface BookingData {
   preferredDate: string;
   preferredTime: string;
   notes: string;
-
-  // Payment
-  paymentMethod: string;
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  billingAddress: string;
 }
 
 export default function BookAppointmentPage() {
@@ -71,7 +63,6 @@ export default function BookAppointmentPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [bookingData, setBookingData] = useState<BookingData>({
     firstName: "",
@@ -86,14 +77,10 @@ export default function BookAppointmentPage() {
     preferredDate: "",
     preferredTime: "",
     notes: "",
-    paymentMethod: "credit_card",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    billingAddress: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmationAccepted, setConfirmationAccepted] = useState(false);
 
   // Fetch services on component mount
   useEffect(() => {
@@ -102,9 +89,7 @@ export default function BookAppointmentPage() {
         setLoading(true);
         const fetchedServices = await api.getServices();
         setServices(fetchedServices);
-        setError(null);
       } catch (err) {
-        setError("Failed to load services. Please try again later.");
         console.error("Error fetching services:", err);
       } finally {
         setLoading(false);
@@ -144,8 +129,6 @@ export default function BookAppointmentPage() {
           newErrors.email = "Please enter a valid email";
         if (!bookingData.phone.trim())
           newErrors.phone = "Phone number is required";
-        if (!bookingData.dateOfBirth.trim())
-          newErrors.dateOfBirth = "Date of birth is required";
         break;
 
       case 2: // Services
@@ -156,16 +139,17 @@ export default function BookAppointmentPage() {
       case 3: // Schedule
         if (!bookingData.preferredDate)
           newErrors.preferredDate = "Please select a date";
+        else {
+          const selectedDate = new Date(bookingData.preferredDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Set to start of today
+
+          if (selectedDate < today) {
+            newErrors.preferredDate = "Please select today or a future date";
+          }
+        }
         if (!bookingData.preferredTime)
           newErrors.preferredTime = "Please select a time";
-        break;
-
-      case 4: // Payment
-        if (!bookingData.cardNumber.trim())
-          newErrors.cardNumber = "Card number is required";
-        if (!bookingData.expiryDate.trim())
-          newErrors.expiryDate = "Expiry date is required";
-        if (!bookingData.cvv.trim()) newErrors.cvv = "CVV is required";
         break;
     }
 
@@ -175,35 +159,28 @@ export default function BookAppointmentPage() {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      const newStep = Math.min(currentStep + 1, 5);
+      const newStep = Math.min(currentStep + 1, 4);
       setCurrentStep(newStep);
-      updateProgressSteps(newStep);
     }
   };
 
   const prevStep = () => {
     const newStep = Math.max(currentStep - 1, 1);
     setCurrentStep(newStep);
-    updateProgressSteps(newStep);
-  };
-
-  const updateProgressSteps = (activeStep: number) => {
-    // Update the progressSteps array (in a real app, this would be state)
-    progressSteps.map((step) => ({
-      ...step,
-      completed: step.id < activeStep,
-      active: step.id === activeStep,
-    }));
   };
 
   const calculateTotal = () => {
     return bookingData.selectedServices.reduce((total, serviceId) => {
       const service = services.find((s) => s.id === parseInt(serviceId));
-      return total + (service?.price || 0);
+      return total + (Number(service?.price) || 0);
     }, 0);
   };
 
   const handleSubmit = async () => {
+    if (!confirmationAccepted) {
+      return;
+    }
+
     if (validateStep(currentStep)) {
       try {
         setSubmitting(true);
@@ -229,7 +206,7 @@ export default function BookAppointmentPage() {
         await api.createAppointment(appointmentPayload);
 
         alert(
-          "Appointment booked successfully! You will receive a confirmation email shortly."
+          "Your appointment has been booked successfully! You will receive a confirmation email with all the details."
         );
         router.push("/");
       } catch (error) {
@@ -299,8 +276,6 @@ export default function BookAppointmentPage() {
                 label="Date of Birth"
                 value={bookingData.dateOfBirth}
                 onChange={(value) => updateBookingData("dateOfBirth", value)}
-                error={errors.dateOfBirth}
-                required
               />
 
               <Input
@@ -333,30 +308,28 @@ export default function BookAppointmentPage() {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-dark mb-4">
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-dark mb-3">
                 Select Services
               </h2>
-              <p className="text-dark/80">
-                Choose the dental services you need for your appointment.
+              <p className="text-dark/80 text-sm">
+                Choose the dental services for this appointment.
               </p>
             </div>
 
-            {loading && (
+            {errors.services && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-center">
+                {errors.services}
+              </div>
+            )}
+
+            {loading ? (
               <div className="text-center py-8">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 <p className="mt-2 text-dark/70">Loading services...</p>
               </div>
-            )}
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-center">
-                {error}
-              </div>
-            )}
-
-            {!loading && !error && (
+            ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {services.map((service) => (
                   <div
@@ -434,23 +407,23 @@ export default function BookAppointmentPage() {
 
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-dark mb-4">
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-dark mb-3">
                 Schedule Appointment
               </h2>
-              <p className="text-dark/80">
-                Select your preferred date and time for the appointment.
+              <p className="text-dark/80 text-sm">
+                Select the preferred date and time for the appointment.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label
                   htmlFor="preferred-date"
-                  className="block text-dark font-medium mb-2"
+                  className="block text-dark font-medium mb-2 text-sm"
                 >
-                  Preferred Date
+                  Preferred Date *
                 </label>
                 <input
                   id="preferred-date"
@@ -475,9 +448,9 @@ export default function BookAppointmentPage() {
               <div>
                 <label
                   htmlFor="preferred-time"
-                  className="block text-dark font-medium mb-2"
+                  className="block text-dark font-medium mb-2 text-sm"
                 >
-                  Preferred Time
+                  Preferred Time *
                 </label>
                 <select
                   id="preferred-time"
@@ -520,227 +493,218 @@ export default function BookAppointmentPage() {
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-dark mb-4">
-                Payment Information
+                Confirm Appointment
               </h2>
-              <p className="text-dark/80">
-                Secure payment processing for your appointment.
+              <p className="text-dark/70 text-base max-w-md mx-auto">
+                Please review all appointment details carefully before
+                confirming.
               </p>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-              <h3 className="font-semibold text-dark mb-4">
-                Appointment Summary
-              </h3>
-              <div className="space-y-2">
-                {bookingData.selectedServices.map((serviceId) => {
-                  const service = services.find(
-                    (s) => s.id === parseInt(serviceId)
-                  );
-                  return (
-                    <div
-                      key={serviceId}
-                      className="flex justify-between text-sm"
-                    >
-                      <span>{service?.name}</span>
-                      <span>₱{service?.price?.toLocaleString()}</span>
-                    </div>
-                  );
-                })}
-                <div className="border-t border-blue-200 pt-2 mt-4 flex justify-between font-bold">
-                  <span>Total Amount:</span>
-                  <span className="text-lg">
-                    ₱{calculateTotal().toLocaleString()}
-                  </span>
-                </div>
-              </div>
             </div>
 
             <div className="space-y-6">
-              <div>
-                <label
-                  htmlFor="payment-method"
-                  className="block text-dark font-medium mb-2"
-                >
-                  Payment Method
-                </label>
-                <select
-                  id="payment-method"
-                  value={bookingData.paymentMethod}
-                  onChange={(e) =>
-                    updateBookingData("paymentMethod", e.target.value)
-                  }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
-                >
-                  <option value="credit_card">Credit Card</option>
-                  <option value="debit_card">Debit Card</option>
-                  <option value="paypal">PayPal</option>
-                </select>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <Input
-                  label="Card Number"
-                  placeholder="1234 5678 9012 3456"
-                  value={bookingData.cardNumber}
-                  onChange={(value) => updateBookingData("cardNumber", value)}
-                  error={errors.cardNumber}
-                  required
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Expiry Date"
-                    placeholder="MM/YY"
-                    value={bookingData.expiryDate}
-                    onChange={(value) => updateBookingData("expiryDate", value)}
-                    error={errors.expiryDate}
-                    required
-                  />
-
-                  <Input
-                    label="CVV"
-                    placeholder="123"
-                    value={bookingData.cvv}
-                    onChange={(value) => updateBookingData("cvv", value)}
-                    error={errors.cvv}
-                    required
-                  />
-                </div>
-              </div>
-
-              <Textarea
-                label="Billing Address"
-                placeholder="Enter billing address (same as patient address if not specified)"
-                value={bookingData.billingAddress}
-                onChange={(value) => updateBookingData("billingAddress", value)}
-                rows={3}
-              />
-            </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-dark mb-4">
-                Confirm Your Appointment
-              </h2>
-              <p className="text-dark/80">
-                Please review all details before confirming your appointment.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
               {/* Patient Information */}
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <h3 className="font-semibold text-dark mb-4 flex items-center gap-2">
-                  <span className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
+              <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     1
-                  </span>
-                  Patient Information
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <strong>Name:</strong> {bookingData.firstName}{" "}
-                    {bookingData.lastName}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {bookingData.email}
-                  </p>
-                  <p>
-                    <strong>Phone:</strong> {bookingData.phone}
-                  </p>
-                  <p>
-                    <strong>Date of Birth:</strong> {bookingData.dateOfBirth}
-                  </p>
+                  </div>
+                  <h3 className="font-semibold text-dark text-base">
+                    Patient Information
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Name
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.firstName} {bookingData.lastName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Email
+                    </span>
+                    <span className="font-medium text-dark text-sm break-words">
+                      {bookingData.email}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Phone
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.phone}
+                    </span>
+                  </div>
+                  {bookingData.dateOfBirth && (
+                    <div>
+                      <span className="text-gray-600 text-sm block mb-1">
+                        Date of Birth
+                      </span>
+                      <span className="font-medium text-dark text-sm">
+                        {bookingData.dateOfBirth}
+                      </span>
+                    </div>
+                  )}
                   {bookingData.emergencyContact && (
-                    <p>
-                      <strong>Emergency Contact:</strong>{" "}
-                      {bookingData.emergencyContact}
-                    </p>
+                    <div className="col-span-2">
+                      <span className="text-gray-600 text-sm block mb-1">
+                        Emergency Contact
+                      </span>
+                      <span className="font-medium text-dark text-sm break-words">
+                        {bookingData.emergencyContact}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
 
               {/* Services & Schedule */}
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <h3 className="font-semibold text-dark mb-4 flex items-center gap-2">
-                  <span className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-white text-sm">
+              <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     2
-                  </span>
-                  Services & Schedule
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <strong>Services:</strong>
-                    <ul className="mt-1 ml-4">
+                  </div>
+                  <h3 className="font-semibold text-dark text-base">
+                    Services & Schedule
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <span className="text-gray-600 text-sm block mb-2">
+                      Services
+                    </span>
+                    <div className="space-y-1">
                       {bookingData.selectedServices.map((serviceId) => {
                         const service = services.find(
                           (s) => s.id === parseInt(serviceId)
                         );
-                        return <li key={serviceId}>{service?.name}</li>;
+                        return (
+                          <div
+                            key={serviceId}
+                            className="text-sm font-medium text-dark bg-blue-50 px-3 py-1 rounded-md inline-block mr-2 mb-1"
+                          >
+                            {service?.name}
+                          </div>
+                        );
                       })}
-                    </ul>
+                    </div>
                   </div>
-                  <p>
-                    <strong>Date:</strong> {bookingData.preferredDate}
-                  </p>
-                  <p>
-                    <strong>Time:</strong> {bookingData.preferredTime}
-                  </p>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Date
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.preferredDate}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-1">
+                      Time
+                    </span>
+                    <span className="font-medium text-dark text-sm">
+                      {bookingData.preferredTime}
+                    </span>
+                  </div>
                   {bookingData.notes && (
-                    <p>
-                      <strong>Notes:</strong> {bookingData.notes}
-                    </p>
+                    <div className="col-span-2">
+                      <span className="text-gray-600 text-sm block mb-1">
+                        Notes
+                      </span>
+                      <p className="text-sm text-dark bg-gray-50 p-2 rounded-md">
+                        {bookingData.notes}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Payment Information */}
-              <div className="bg-gray-50 p-6 rounded-xl md:col-span-2">
-                <h3 className="font-semibold text-dark mb-4 flex items-center gap-2">
-                  <span className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">
+              {/* Appointment Summary */}
+              <div className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     3
-                  </span>
-                  Payment Information
-                </h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <strong>Method:</strong>{" "}
-                      {bookingData.paymentMethod
-                        .replace("_", " ")
-                        .toUpperCase()}
-                    </p>
-                    <p>
-                      <strong>Card:</strong> **** **** ****{" "}
-                      {bookingData.cardNumber.slice(-4)}
-                    </p>
-                    <p>
-                      <strong>Expires:</strong> {bookingData.expiryDate}
-                    </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">
-                      ₱{calculateTotal().toLocaleString()}
+                  <h3 className="font-semibold text-dark text-base">
+                    Appointment Summary
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-gray-600 text-sm block mb-2">
+                      Service Breakdown
+                    </span>
+                    <div className="space-y-2">
+                      {bookingData.selectedServices.map((serviceId) => {
+                        const service = services.find(
+                          (s) => s.id === parseInt(serviceId)
+                        );
+                        return (
+                          <div
+                            key={serviceId}
+                            className="flex justify-between text-sm"
+                          >
+                            <span className="text-dark">{service?.name}</span>
+                            <span className="font-medium text-dark">
+                              ₱{service?.price?.toLocaleString()}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="text-sm text-dark/70">Total Amount</div>
+                  </div>
+                  <div className="border-t border-gray-200 pt-3 mt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 text-sm">
+                        Total Amount
+                      </span>
+                      <span className="text-xl font-bold text-blue-600">
+                        ₱{calculateTotal().toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-semibold text-yellow-800 mb-2">
-                Important Notes:
-              </h4>
-              <ul className="text-yellow-700 text-sm space-y-1">
-                <li>• Please arrive 15 minutes early for your appointment</li>
-                <li>• Bring your ID and insurance card if applicable</li>
-                <li>• Payment will be processed upon completion of services</li>
-                <li>• Cancellation policy: 24 hours notice required</li>
-              </ul>
+            {/* Confirmation Notice */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-8">
+              <div className="flex items-start gap-4">
+                <button
+                  onClick={() => setConfirmationAccepted(!confirmationAccepted)}
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                    confirmationAccepted
+                      ? "bg-blue-600 border-blue-600"
+                      : "bg-white border-blue-300 hover:border-blue-400"
+                  }`}
+                  aria-label="Confirm appointment details"
+                >
+                  {confirmationAccepted && (
+                    <svg
+                      className="w-2 h-2 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                </button>
+                <div className="flex-1">
+                  <p className="text-sm text-blue-800 font-medium mb-1">
+                    Confirm Your Appointment
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    By confirming this appointment, you acknowledge that all
+                    information provided is accurate and you understand the
+                    appointment details.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -812,8 +776,10 @@ export default function BookAppointmentPage() {
 
               <Button
                 variant="primary"
-                onClick={currentStep === 5 ? handleSubmit : nextStep}
-                disabled={submitting}
+                onClick={currentStep === 4 ? handleSubmit : nextStep}
+                disabled={
+                  submitting || (currentStep === 4 && !confirmationAccepted)
+                }
                 className="px-8 py-3"
               >
                 {submitting ? (
@@ -821,8 +787,8 @@ export default function BookAppointmentPage() {
                     <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Booking...
                   </>
-                ) : currentStep === 5 ? (
-                  "Confirm & Book Appointment"
+                ) : currentStep === 4 ? (
+                  "Book My Appointment"
                 ) : (
                   "Next →"
                 )}
