@@ -31,6 +31,27 @@ export default function EditAppointmentModal({
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
 
+  // Time restrictions based on day of week
+  const getTimeRestrictions = (dateString: string) => {
+    if (!dateString) return { min: "08:00", max: "18:00" }; // Default to weekday hours
+
+    const date = new Date(dateString);
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+    // Saturday (6): 9am to 3pm
+    if (dayOfWeek === 6) {
+      return { min: "09:00", max: "15:00" };
+    }
+    // Monday to Friday (1-5): 8am to 6pm
+    else if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      return { min: "08:00", max: "18:00" };
+    }
+    // Sunday (0) and any other case: default to weekday hours
+    else {
+      return { min: "08:00", max: "18:00" };
+    }
+  };
+
   useEffect(() => {
     if (appointment && isOpen) {
       setFormData({
@@ -77,6 +98,21 @@ export default function EditAppointmentModal({
 
     if (!formData.time) {
       newErrors.time = "Time is required";
+    } else if (formData.date) {
+      const timeRestrictions = getTimeRestrictions(formData.date);
+      const selectedTime = formData.time;
+
+      if (
+        selectedTime < timeRestrictions.min ||
+        selectedTime > timeRestrictions.max
+      ) {
+        const date = new Date(formData.date);
+        const dayOfWeek = date.getDay();
+        const dayName = dayOfWeek === 6 ? "Saturday" : "weekdays";
+        const hours =
+          dayOfWeek === 6 ? "9:00 AM - 3:00 PM" : "8:00 AM - 6:00 PM";
+        newErrors.time = `Time must be within ${dayName} hours: ${hours}`;
+      }
     }
 
     if (!formData.status) {
@@ -113,6 +149,11 @@ export default function EditAppointmentModal({
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+
+    // Clear time error when date changes
+    if (field === "date" && errors.time) {
+      setErrors((prev) => ({ ...prev, time: "" }));
     }
   };
 
@@ -265,11 +306,28 @@ export default function EditAppointmentModal({
                     id="time"
                     value={formData.time}
                     onChange={(e) => handleInputChange("time", e.target.value)}
+                    min={getTimeRestrictions(formData.date).min}
+                    max={getTimeRestrictions(formData.date).max}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.time ? "border-red-300" : "border-gray-300"
                     }`}
                     disabled={isSaving}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.date
+                      ? (() => {
+                          const date = new Date(formData.date);
+                          const dayOfWeek = date.getDay();
+                          if (dayOfWeek === 6) {
+                            return "Saturday hours: 9:00 AM - 3:00 PM";
+                          } else if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                            return "Weekday hours: 8:00 AM - 6:00 PM";
+                          } else {
+                            return "Hours: 8:00 AM - 6:00 PM";
+                          }
+                        })()
+                      : "Please select a date first"}
+                  </p>
                   {errors.time && (
                     <p className="mt-1 text-sm text-red-600">{errors.time}</p>
                   )}
