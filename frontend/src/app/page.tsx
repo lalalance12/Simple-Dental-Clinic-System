@@ -24,17 +24,27 @@ export default function Home() {
     {
       icon: <CleaningIcon />,
       title: "Deep Cleaning",
-      description: "Professional cleaning for healthy gums",
+      description: "Professional dental cleaning and scaling",
     },
     {
       icon: <WhiteningIcon />,
       title: "Teeth Whitening",
-      description: "Brighten your smile with professional whitening",
+      description: "Professional teeth whitening treatment",
     },
     {
       icon: <ImplantIcon />,
-      title: "Dental Implants",
-      description: "Restore your smile with permanent solutions",
+      title: "Dental Implant",
+      description: "Single tooth implant replacement",
+    },
+    {
+      icon: <ToothIcon />,
+      title: "Tooth Extraction",
+      description: "Safe removal of damaged or decayed teeth",
+    },
+    {
+      icon: <CheckupIcon />,
+      title: "Emergency Care",
+      description: "Emergency dental treatment and pain relief",
     },
   ];
 
@@ -125,7 +135,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((service, index) => (
               <ServiceCard
                 key={index}

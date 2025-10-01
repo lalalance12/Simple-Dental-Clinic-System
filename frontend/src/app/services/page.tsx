@@ -25,7 +25,7 @@ const services = [
     longDesc:
       "Our comprehensive dental checkups include a thorough examination of your teeth, gums, and mouth. We use advanced digital imaging technology to detect any potential issues early, ensuring optimal oral health. Professional cleaning removes plaque and tartar buildup, preventing cavities and gum disease.",
     duration: "45-60 minutes",
-    price: "From ₱4,800",
+    price: "₱1,800",
     features: [
       "Complete oral examination",
       "Digital X-rays",
@@ -46,11 +46,11 @@ const services = [
     id: "cleaning",
     icon: <CleaningIcon size={64} className="text-white" />,
     title: "Deep Cleaning",
-    shortDesc: "Professional cleaning for healthy gums",
+    shortDesc: "Professional dental cleaning and scaling",
     longDesc:
       "Deep cleaning, also known as scaling and root planing, is a thorough cleaning procedure that removes plaque and tartar from below the gum line. This treatment is essential for treating gum disease and preventing its progression. Our experienced hygienists use gentle techniques and advanced equipment for your comfort.",
     duration: "60-90 minutes",
-    price: "From ₱7,600",
+    price: "₱5,600",
     features: [
       "Ultrasonic scaling",
       "Hand scaling and root planing",
@@ -72,11 +72,11 @@ const services = [
     id: "whitening",
     icon: <WhiteningIcon size={64} className="text-white" />,
     title: "Teeth Whitening",
-    shortDesc: "Brighten your smile with professional whitening",
+    shortDesc: "Professional teeth whitening treatment",
     longDesc:
       "Achieve a brighter, more confident smile with our professional teeth whitening services. We offer both in-office and take-home whitening options using safe, effective whitening agents. Our whitening treatments are customized to your needs and deliver dramatic results in just one visit.",
     duration: "30-60 minutes",
-    price: "From ₱12,700",
+    price: "₱8,700",
     features: [
       "Custom shade matching",
       "Professional whitening gel",
@@ -97,12 +97,12 @@ const services = [
   {
     id: "implant",
     icon: <ImplantIcon size={64} className="text-white" />,
-    title: "Dental Implants",
-    shortDesc: "Restore your smile with permanent solutions",
+    title: "Dental Implant",
+    shortDesc: "Single tooth implant replacement",
     longDesc:
       "Dental implants are the gold standard for replacing missing teeth. Our implant procedures use high-quality titanium implants that integrate with your jawbone, providing a stable foundation for replacement teeth. We offer single tooth, multiple teeth, and full mouth implant solutions.",
-    duration: "2-6 months (including healing)",
-    price: "From ₱127,000",
+    duration: "2-6 months",
+    price: "₱70,000",
     features: [
       "3D imaging and planning",
       "Surgical placement",
@@ -118,6 +118,58 @@ const services = [
       "Improved chewing ability",
       "Enhanced self-confidence",
       "Long-term durability",
+    ],
+  },
+  {
+    id: "extraction",
+    icon: <ToothIcon size={64} className="text-white" />,
+    title: "Tooth Extraction",
+    shortDesc: "Safe removal of damaged or decayed teeth",
+    longDesc:
+      "When a tooth is severely damaged, decayed, or causing pain, tooth extraction may be necessary. Our gentle extraction procedures use advanced techniques and anesthesia to ensure your comfort. We provide comprehensive aftercare instructions and can discuss replacement options like implants or bridges.",
+    duration: "30-45 minutes",
+    price: "₱5,000",
+    features: [
+      "Local anesthesia",
+      "Gentle extraction techniques",
+      "Post-extraction care",
+      "Pain management",
+      "Replacement options discussion",
+      "Follow-up care",
+    ],
+    benefits: [
+      "Pain relief",
+      "Prevention of infection",
+      "Improved oral health",
+      "Space for replacement teeth",
+      "Prevention of complications",
+      "Restored comfort",
+    ],
+  },
+  {
+    id: "emergency",
+    icon: <CheckupIcon size={64} className="text-white" />,
+    title: "Emergency Care",
+    shortDesc: "Emergency dental treatment and pain relief",
+    longDesc:
+      "Dental emergencies can happen at any time. Our emergency dental care provides immediate relief for severe tooth pain, broken teeth, lost fillings, and other urgent dental issues. We offer same-day appointments for emergencies and work to restore your comfort and oral health as quickly as possible.",
+    duration: "Varies",
+    price: "₱8,000",
+    features: [
+      "Same-day emergency appointments",
+      "Pain relief treatment",
+      "Temporary repairs",
+      "Infection treatment",
+      "24/7 emergency consultation",
+      "Comprehensive care planning",
+    ],
+    benefits: [
+      "Immediate pain relief",
+      "Prevention of complications",
+      "Restored oral function",
+      "Peace of mind",
+      "Prompt professional care",
+      "Complete emergency solutions",
     ],
   },
 ];
