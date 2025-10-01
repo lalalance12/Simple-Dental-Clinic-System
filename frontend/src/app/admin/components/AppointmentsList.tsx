@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { api, Appointment } from "../../../lib/api";
 import AppointmentDetailsModal from "./AppointmentDetailsModal";
 import DeleteAppointmentModal from "./DeleteAppointmentModal";
+import EditAppointmentModal from "./EditAppointmentModal";
 
 export default function AppointmentsList() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -16,6 +17,10 @@ export default function AppointmentsList() {
     useState<Appointment | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] =
+    useState<Appointment | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -102,6 +107,62 @@ export default function AppointmentsList() {
   const handleCancelDelete = () => {
     setIsDeleteModalOpen(false);
     setAppointmentToDelete(null);
+  };
+
+  const handleEditAppointment = (appointment: Appointment) => {
+    setAppointmentToEdit(appointment);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveAppointment = async (
+    updatedAppointment: Partial<Appointment & { serviceIds: number[] }>
+  ) => {
+    if (!appointmentToEdit) return;
+
+    setIsSaving(true);
+    try {
+      const appointmentData = {
+        date:
+          updatedAppointment.date instanceof Date
+            ? updatedAppointment.date.toISOString().split("T")[0]
+            : String(updatedAppointment.date || ""),
+        time: updatedAppointment.time || "",
+        status: updatedAppointment.status || "",
+        notes: updatedAppointment.notes || "",
+        serviceIds: updatedAppointment.serviceIds,
+      };
+
+      const savedAppointment = await api.updateAppointment(
+        appointmentToEdit.id,
+        appointmentData
+      );
+
+      // Update the appointment in the list
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((appointment) =>
+          appointment.id === savedAppointment.id
+            ? savedAppointment
+            : appointment
+        )
+      );
+
+      setIsEditModalOpen(false);
+      setAppointmentToEdit(null);
+
+      // Also close the details modal if it's open
+      setIsModalOpen(false);
+      setSelectedAppointment(null);
+    } catch (err) {
+      console.error("Error updating appointment:", err);
+      alert("Failed to update appointment. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false);
+    setAppointmentToEdit(null);
   };
 
   // Pagination logic
@@ -350,6 +411,8 @@ export default function AppointmentsList() {
           appointment={selectedAppointment}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
+          onEdit={() => handleEditAppointment(selectedAppointment)}
+          onSave={handleSaveAppointment}
         />
       )}
 
@@ -361,6 +424,17 @@ export default function AppointmentsList() {
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           isDeleting={isDeleting}
+        />
+      )}
+
+      {/* Edit Appointment Modal */}
+      {appointmentToEdit && (
+        <EditAppointmentModal
+          appointment={appointmentToEdit}
+          isOpen={isEditModalOpen}
+          onClose={handleCancelEdit}
+          onSave={handleSaveAppointment}
+          isSaving={isSaving}
         />
       )}
     </div>

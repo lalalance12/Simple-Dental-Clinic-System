@@ -5,6 +5,7 @@ import { Appointment } from '../../entities/appointment.entity';
 import { AppointmentService } from '../../entities/appointment-service.entity';
 import { Client } from '../../entities/client.entity';
 import { CreateAppointmentDto } from '../../dto/create-appointment.dto';
+import { UpdateAppointmentDto } from '../../dto/update-appointment.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -117,6 +118,41 @@ export class AppointmentsService {
 
     // Return the appointment with all relations loaded
     return this.findOne(savedAppointment.id);
+  }
+
+  async update(
+    id: number,
+    updateAppointmentDto: UpdateAppointmentDto,
+  ): Promise<Appointment> {
+    await this.findOne(id); // This will throw NotFoundException if not found
+
+    // Update the appointment
+    await this.appointmentsRepository.update(id, {
+      date: new Date(updateAppointmentDto.date),
+      time: updateAppointmentDto.time,
+      status: updateAppointmentDto.status,
+      notes: updateAppointmentDto.notes,
+    });
+
+    // If serviceIds are provided, update the services
+    if (updateAppointmentDto.serviceIds !== undefined) {
+      // Delete existing appointment-service relationships
+      await this.appointmentServiceRepository.delete({ appointment: { id } });
+
+      // Create new appointment-service relationships
+      if (updateAppointmentDto.serviceIds.length > 0) {
+        const appointmentServices = updateAppointmentDto.serviceIds.map(
+          (serviceId) => ({
+            appointment: { id },
+            service: { id: serviceId },
+          }),
+        );
+        await this.appointmentServiceRepository.save(appointmentServices);
+      }
+    }
+
+    // Return the updated appointment with all relations loaded
+    return this.findOne(id);
   }
 
   async remove(id: number): Promise<void> {
