@@ -97,8 +97,8 @@ simple-dental-clinic-system/
 ┌─────────────────┐       ┌─────────────────┐
 │     Client      │       │   Appointment   │
 ├─────────────────┤       ├─────────────────┤
-│ id (PK)         │◄──────┤ id (PK)         │
-│ firstName       │       │ date            │
+│ id (PK)         │──────►│ id (PK)         │
+│ firstName       │  1..* │ date            │
 │ lastName        │       │ time            │
 │ email           │       │ status          │
 │ phone           │       │ notes           │
@@ -107,24 +107,24 @@ simple-dental-clinic-system/
 │ emergencyContact│               │
 │ medicalHistory  │               │
 └─────────────────┘               │
-        │                         │
-        │ 1..*                    │ 1..*
-        ▼                         ▼
-┌─────────────────┐       ┌─────────────────┐
-│AppointmentService│       │     Service     │
-├─────────────────┤       ├─────────────────┤
-│ id (PK)         │       │ id (PK)         │
-│ appointment_id  │──────►│ name            │
-│ service_id      │       │ description     │
-└─────────────────┘       │ price           │
-                          │ duration        │
-                          └─────────────────┘
+                                  │ 1..*
+                                  │
+                                  │
+                                  ▼
+                        ┌──────────────────┐
+                        │     Service      │
+                        ├──────────────────┤
+                        │ id (PK)          │
+                        │ name             │
+                        │ description      │
+                        │ price            │
+                        │ duration         │
+                        └──────────────────┘
 ```
 
 ### Relationships:
 - **Client ↔ Appointment**: One-to-Many (One client can have multiple appointments)
-- **Appointment ↔ Service**: Many-to-Many (via AppointmentService junction table)
-- **AppointmentService**: Junction table linking appointments to services
+- **Appointment ↔ Service**: Many-to-Many (One appointment can have multiple services, one service can be used in multiple appointments)
 
 ## 🚀 Getting Started
 
